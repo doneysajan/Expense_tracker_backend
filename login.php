@@ -1,53 +1,38 @@
 <?php
-// login.php
-
-// Include the database connection file
 include 'dbconn.php';
 
-// Check if the form is submitted
-if (isset($_POST['login'])) {
-    // Get user input
-    $email = $_POST['email'];  // Change from $username to $email
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get data from the POST request
+    $username = $_POST['email']; // Change this line to use 'email'
     $password = $_POST['password'];
-
-    // Use prepared statement to prevent SQL injection
-    $query = "SELECT * FROM users WHERE email = ?";
-    $stmt = $conn->prepare($query);
-
-    if ($stmt) {
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        // Check if a matching record was found
-        if ($result->num_rows == 1) {
-            $user = $result->fetch_assoc();
-
-            // Verify the hashed password
-            if (password_verify($password, $user['password'])) {
-                // Successful login
-                $response = ['success' => true, 'message' => 'Login successful'];
-            } else {
-                // Invalid password
-                $response = ['success' => false, 'message' => 'Invalid password'];
-            }
+    // Perform login check in the 'users' table
+    $sql = "SELECT * FROM users WHERE email = '$username'";
+    $result = $conn->query($sql);
+//     
+    if ($result->num_rows > 0) {
+        $row = $result->fetch_assoc();
+        // echo json_encode($row['password']);
+        // exit();
+        // Verify the entered password against the hashed password in the database
+        if ($password == $row['password']) {
+        // if (password_verify($password, $row['password'])) {
+            // Password is correct, set session or perform other actions
+            session_start();
+            $_SESSION['user_id'] = $row['id'];
+            $_SESSION['username'] = $row['email'];
+            $response = ['success' => true, 'message' => 'Logged in'];
+            // Redirect to the home page or any other authorized page
+           // header("Location: index.html");
+            //exit();
         } else {
-            // Invalid username or no matching record
-            $response = ['success' => false, 'message' => 'Invalid username'];
+            // Incorrect password
+            $response = ['success' => false, 'message' => 'Incorrect password. Please try again.'];
         }
-
-        // Close the prepared statement
-        $stmt->close();
     } else {
-        // Handle statement preparation error
-        $response = ['success' => false, 'message' => 'Statement preparation error'];
+        // User not found
+        $response = ['success' => false, 'message' => 'User not found. Please check your username.'];
     }
 
-    // Close the result set
-    $result->close();
-
-    // Send JSON response
-    header('Content-Type: application/json');
     echo json_encode($response);
 }
 ?>
