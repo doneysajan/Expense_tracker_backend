@@ -14,8 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // echo json_encode($row['password']);
         // exit();
         // Verify the entered password against the hashed password in the database
-        if ($password == $row['password']) {
-        // if (password_verify($password, $row['password'])) {
+        //if ($password == $row['password']) {
+        if (password_verify($password, $row['password'])) {
             // Password is correct, set session or perform other actions
             session_start();
             $_SESSION['user_id'] = $row['id'];
